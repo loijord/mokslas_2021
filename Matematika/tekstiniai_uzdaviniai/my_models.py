@@ -1,5 +1,8 @@
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
+from matplotlib.colors import ListedColormap
 
 def Vergnaud():
     arr1 = np.array([['Matų izomorfizmas','Matų sandauga','Kartotinis proporcingumas']])
@@ -29,3 +32,31 @@ def Greer():
     df_fractions = pd.DataFrame(arr2.T, columns=('Subkonstruktas', 'Tipas', 'Kintamųjų paaiškinimai'))
     df_fractions.set_index(['Subkonstruktas',  'Tipas', 'Kintamųjų paaiškinimai'], inplace=True)
     return df_fractions
+
+def draw_tasking(N, M, P, fill_in):
+    fig, ax = plt.subplots(figsize=(M, N))
+    arr = (np.arange(N*M) < P).astype(int)
+    if len(fill_in):
+        arr[np.array(fill_in) - 1] = 2
+    arr = arr.reshape(N, M)[::-1,:]
+
+    ax.xaxis.set_tick_params(labeltop=True)
+    ax.xaxis.set_tick_params(labelbottom=False)
+
+    if 0 not in arr: lmap = ListedColormap(['pink', 'lightblue'])
+    else: lmap = ListedColormap(['w', 'pink', 'lightblue'])
+                                
+    ax.pcolormesh(arr, edgecolors='k', linewidth=2, cmap=lmap)
+    ax.set_xticks(np.arange(M + 1))
+    ax.yaxis.set_major_locator(mticker.FixedLocator(np.arange(N + 1)))
+    ax.set_yticklabels(np.arange(N, -1, -1))
+
+    for i in range(arr.shape[0]):
+        for j in range(arr.shape[1]):
+            id = (N-i-1)*M+j + 1
+            if id <= P:
+                text = plt.text(j+0.5, i+0.5, id, 
+                        ha="center", va="center", color="k", fontsize='xx-large')
+    plt.show()
+
+#draw_tasking(3, 8, 20, [1])
