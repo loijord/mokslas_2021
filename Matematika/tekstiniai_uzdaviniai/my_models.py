@@ -1,8 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.ticker as mticker
-from matplotlib.colors import ListedColormap
+from matplotlib.patches import Rectangle
 
 def Vergnaud():
     arr1 = np.array([['Matų izomorfizmas','Matų sandauga','Kartotinis proporcingumas']])
@@ -33,30 +32,60 @@ def Greer():
     df_fractions.set_index(['Subkonstruktas',  'Tipas', 'Kintamųjų paaiškinimai'], inplace=True)
     return df_fractions
 
-def draw_tasking(N, M, P, fill_in):
-    fig, ax = plt.subplots(figsize=(M, N))
-    arr = (np.arange(N*M) < P).astype(int)
-    if len(fill_in):
-        arr[np.array(fill_in) - 1] = 2
-    arr = arr.reshape(N, M)[::-1,:]
 
-    ax.xaxis.set_tick_params(labeltop=True)
-    ax.xaxis.set_tick_params(labelbottom=False)
+def draw_tasking(ncols, N, colors=dict(), docs=dict(), extent=8, lfont=16):
+    """shows a list of problems, N in total, ncols columns, extent is a place for legends"""
+    nrows = N//ncols+1
+    fig, ax = plt.subplots(figsize=(ncols+extent, nrows))
+                       
+    ax.set_xticks(np.arange(ncols + 1))
+    ax.set_yticks(np.arange(nrows + 1))
+    ax.set_xlim(np.array(ax.get_xlim()) + [-0.1, extent+0.1])
+    ax.set_ylim(np.array(ax.get_ylim()) + [-0.1, 0.1])
+    ax.invert_yaxis()
+    ax.set_aspect('equal')
+    ax.axis('off')
+    
+    #Auto coloring of squares
+    d = dict.fromkeys(range(1, N+1), 'pink')
+    for color, cells in colors.items():
+        for c in cells:
+            d[c] = color
 
-    if 0 not in arr: lmap = ListedColormap(['pink', 'lightblue'])
-    else: lmap = ListedColormap(['w', 'pink', 'lightblue'])
-                                
-    ax.pcolormesh(arr, edgecolors='k', linewidth=2, cmap=lmap)
-    ax.set_xticks(np.arange(M + 1))
-    ax.yaxis.set_major_locator(mticker.FixedLocator(np.arange(N + 1)))
-    ax.set_yticklabels(np.arange(N, -1, -1))
-
-    for i in range(arr.shape[0]):
-        for j in range(arr.shape[1]):
-            id = (N-i-1)*M+j + 1
-            if id <= P:
-                text = plt.text(j+0.5, i+0.5, id, 
-                        ha="center", va="center", color="k", fontsize='xx-large')
+    #squares + text fill + legend
+    handles = dict()
+    for n in np.arange(1, N+1):
+        x, y = ((n-1)%ncols, (n-1)//ncols)
+        rect = Rectangle(xy=(x, y), width=1, height=1, linewidth=3, 
+                         facecolor=d[n], edgecolor='k', label=docs[d[n]])
+        ax.add_patch(rect)
+        handles[d[n]] = rect
+        text = plt.text(x+0.5, y+0.5, s=n, ha="center", va="center", color="k", fontsize='xx-large')
+        
+    plt.rcParams['legend.handlelength'] = 1
+    plt.rcParams['legend.handleheight'] = 1
+    ax.legend(handles=handles.values(), prop={'size': lfont})
     plt.show()
 
-#draw_tasking(3, 8, 20, [1])
+#draw_tasking(8, 20, colors={'lightgreen':(1, 6, 20), 'lightblue':(7, 9)},
+#                    docs = {'lightgreen': 'Išspręsti ir pasitikrinti uždaviniai', 
+#                            'lightblue': 'Uždaviniai kitam kartui',
+#                            'pink': 'Nespręsti uždaviniai'},
+#                    extent=8, lfont=16)
+
+def draw_division():
+    fig = plt.figure()
+    plt.xlim(0, 15)
+    plt.ylim(0, 16)
+
+    currentAxis = plt.gca()
+    currentAxis.add_patch(Rectangle((0, 0), 12, 12, facecolor="lightgreen"))
+    currentAxis.add_patch(Rectangle((0, 12), 12, 4, facecolor="forestgreen"))
+    currentAxis.add_patch(Rectangle((12, 0), 3, 12, facecolor="seagreen"))
+    currentAxis.add_patch(Rectangle((12, 12), 3, 4, facecolor="darkgreen"))
+    plt.text(6, 6, 1, ha="center", va="center", color="k", fontsize='xx-large')
+    plt.text(6, 14, 2, ha="center", va="center", color="k", fontsize='xx-large')
+    plt.text(13.5, 6, 3, ha="center", va="center", color="k", fontsize='xx-large')
+    plt.text(13.5, 14, 4, ha="center", va="center", color="k", fontsize='xx-large')
+    plt.axis('off')
+    plt.show()
